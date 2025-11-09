@@ -1,0 +1,126 @@
+{% extends "core/base.html" %}
+{% block title %}Letadla{% endblock %}
+
+{% block content %}
+<!-- 🛫 Horná lišta s vyhľadávaním -->
+<div id="searchBar" class="position-sticky top-0 bg-white border py-2 px-3 d-flex align-items-center justify-content-between rounded-3 shadow-sm" style="z-index: 1020;">
+  <div class="d-flex align-items-center flex-grow-1 me-3">
+    <span class="material-icons text-muted me-2">search</span>
+    <input id="searchInput" type="text" class="form-control" placeholder="Hľadať podľa registračného čísla...">
+    <button class="btn btn-outline-secondary ms-2">Hľadať</button>
+  </div>
+  <button class="btn btn-success">+ Pridať lietadlo</button>
+</div>
+
+<!-- 🧾 Tabuľka -->
+<div class="bg-white border rounded-3 shadow-sm mt-3 p-3" style="max-height: calc(100vh - 220px); overflow-y: auto;">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light position-sticky top-0">
+      <tr>
+        <th class="align-middle">
+          <div class="d-flex align-items-center justify-content-between" style="min-width: 180px;">
+            <button class="btn text-dark fw-bold p-0 column-btn active-column" data-field="registration">
+              Registračné číslo
+            </button>
+            <span class="material-icons sort-icon text-muted">arrow_circle_down</span>
+          </div>
+        </th>
+        <th class="align-middle">
+          <div class="d-flex align-items-center justify-content-between" style="min-width: 150px;">
+            <button class="btn text-dark fw-bold p-0 column-btn" data-field="type">
+              Typ
+            </button>
+            <span class="material-icons sort-icon text-muted">arrow_circle_down</span>
+          </div>
+        </th>
+        <th class="align-middle">
+          <div class="d-flex align-items-center justify-content-between" style="min-width: 180px;">
+            <button class="btn text-dark fw-bold p-0 column-btn" data-field="owner">
+              Majiteľ
+            </button>
+            <span class="material-icons sort-icon text-muted">arrow_circle_down</span>
+          </div>
+        </th>
+        <th class="text-end"></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>OK-ABC</td>
+        <td>Cessna 172</td>
+        <td>Ján Novák</td>
+        <td class="text-end">
+          <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-sm btn-outline-primary" title="Upraviť"><span class="material-icons">edit</span></button>
+            <button class="btn btn-sm btn-outline-secondary" title="Detail"><span class="material-icons">visibility</span></button>
+            <button class="btn btn-sm btn-outline-danger" title="Odstrániť"><span class="material-icons">delete</span></button>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>OK-LHJ</td>
+        <td>Piper PA-28</td>
+        <td>Aeroklub JH</td>
+        <td class="text-end">
+          <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-sm btn-outline-primary" title="Upraviť"><span class="material-icons">edit</span></button>
+            <button class="btn btn-sm btn-outline-secondary" title="Detail"><span class="material-icons">visibility</span></button>
+            <button class="btn btn-sm btn-outline-danger" title="Odstrániť"><span class="material-icons">delete</span></button>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>OK-ZUL</td>
+        <td>Diamond DA40</td>
+        <td>Peter Klepáč</td>
+        <td class="text-end">
+          <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-sm btn-outline-primary" title="Upraviť"><span class="material-icons">edit</span></button>
+            <button class="btn btn-sm btn-outline-secondary" title="Detail"><span class="material-icons">visibility</span></button>
+            <button class="btn btn-sm btn-outline-danger" title="Odstrániť"><span class="material-icons">delete</span></button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 🔁 Interaktivita -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.column-btn');
+    const icons = document.querySelectorAll('.sort-icon');
+    const searchInput = document.getElementById('searchInput');
+
+    const placeholders = {
+      registration: 'Hľadať podľa registračného čísla...',
+      type: 'Hľadať podľa typu...',
+      owner: 'Hľadať podľa majiteľa...'
+    };
+
+    // Klik na text (výber stĺpca)
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active-column'));
+        btn.classList.add('active-column');
+
+        const field = btn.dataset.field;
+        searchInput.placeholder = placeholders[field];
+      });
+    });
+
+    // Klik na ikonu (otáčanie šípky)
+    icons.forEach(icon => {
+      icon.addEventListener('click', () => {
+        icon.textContent =
+          icon.textContent === 'arrow_circle_down'
+            ? 'arrow_circle_up'
+            : 'arrow_circle_down';
+      });
+    });
+  });
+</script>
+{% endblock %}

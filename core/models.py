@@ -1,28 +1,28 @@
-from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-class Customer(models.Model):
-    name = models.CharField(max_length=100)
-    contact = models.CharField(max_length=100, blank=True)
-    emails = ArrayField(
-        models.EmailField(),
-        blank=True,
-        default=list
-    )
 
+class User(AbstractUser):
+    ROLE_CHOICES = [
+        ("manager", "Letecký správce"),
+        ("customer", "Zákazník"),
+    ]
+
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="customer")
+    phone_number = models.CharField(max_length=100, blank=True)
     street = models.CharField(max_length=100, blank=True)
     city = models.CharField(max_length=100, blank=True)
     postal_code = models.CharField(max_length=20, blank=True)
     country = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.username} ({self.get_role_display()})"
 
     def full_address(self):
-        """Combine address fields into one readable string."""
         parts = [self.street, self.city, self.postal_code, self.country]
         return ", ".join([p for p in parts if p])
+
+
 
 class Aircraft(models.Model):
     registration = models.CharField(max_length=50, unique=True)
@@ -35,7 +35,7 @@ class Aircraft(models.Model):
         related_name="assigned_aircraft"
     )
     customers = models.ManyToManyField(
-        Customer,
+        User,
         blank=True,
         related_name='aircraft'
     )
@@ -48,7 +48,7 @@ class Invoice(models.Model):
     amount = models.FloatField()
     paid = models.BooleanField(default=False)
     customer = models.ForeignKey(
-        Customer,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -63,7 +63,7 @@ class Invoice(models.Model):
     )
 
     def __str__(self):
-        return f"Invoice #{self.id} - {self.customer.name if self.customer else 'No customer'}"
+        return f"Invoice #{self.id} - {self.customer or 'No customer'}"
 
 
 class Record(models.Model):

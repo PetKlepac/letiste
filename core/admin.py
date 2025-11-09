@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Customer, Aircraft, Record, Landing, Invoice
+from .models import User, Aircraft, Record, Landing, Invoice
 
 class AircraftInline(admin.TabularInline):
     model = Aircraft.customers.through     # ← this is the link table
@@ -7,10 +7,12 @@ class AircraftInline(admin.TabularInline):
     verbose_name = "Aircraft"
     verbose_name_plural = "Aircraft linked to this customer"
 
-@admin.register(Customer)
-class CustomerAdmin(admin.ModelAdmin):
-    list_display = ("name", "contact", "full_address")
-    search_fields = ("name", "city", "country")
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ("username", "email", "role", "phone_number", "city", "country")
+    list_filter = ("role", "city", "country")
+    search_fields = ("username", "email", "city", "country")
 
 @admin.register(Aircraft)
 class AircraftAdmin(admin.ModelAdmin):
