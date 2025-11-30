@@ -1,0 +1,293 @@
+{% extends "core/base.html" %}
+{% block title %}Zákazníci{% endblock %}
+
+{% block content %}
+
+<style>
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    row-gap: 8px;
+    column-gap: 20px;
+  }
+  .detail-grid .label {
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+    color: #444;
+  }
+  .detail-grid .value {
+    color: #000;
+  }
+
+  /* divider až do okraja modalu */
+  .section-divider {
+      border-top: 1px solid rgba(0,0,0,.175);
+      margin: 1rem -1rem;    /* MAGIC: vykompenzuje padding modalu */
+  }
+</style>
+
+<div id="searchBar" class="bg-white border rounded-3 shadow-sm mb-3 px-3"
+     style="height: 60px; display: flex; align-items: center;">
+
+    <div class="d-flex justify-content-between align-items-center w-100">
+
+        <!-- ĽAVÁ ČASŤ – search pole široké + filtre kompaktné -->
+        <div class="d-flex align-items-center gap-3 flex-grow-1">  <!-- flex-grow-1 je kľúčové! -->
+
+            <!-- SEARCH – teraz má priestor, koľko chce -->
+            <div class="input-group flex-grow-1" style="max-width: 500px;">  <!-- alebo aj 600px / 700px podľa chuti -->
+                <span class="input-group-text"><span class="material-icons">search</span></span>
+                <input id="searchInput" type="text" class="form-control"
+                       placeholder="Hľadať..."
+                       value="{{ search_query }}"
+                       onkeydown="if(event.key==='Enter') applyFilters();">
+            </div>
+
+            <!-- FILTER + SORT – zostanú úzke a hneď vedľa searchu -->
+            <select id="filterSelect" class="form-select form-select-sm" style="width: 160px;" onchange="applyFilters()">
+                <option value="id" {% if current_filter == 'id' %}selected{% endif %}>Podle čísla</option>
+                <option value="name" {% if current_filter == 'name' %}selected{% endif %}>Podle jména</option>
+                <option value="email" {% if current_filter == 'email' %}selected{% endif %}>Podle emailu</option>
+                <option value="company" {% if current_filter == 'company' %}selected{% endif %}>Podle společnosti</option>
+            </select>
+
+            <select id="sortSelect" class="form-select form-select-sm" style="width: 130px;" onchange="applyFilters()">
+                <option value="asc" {% if current_sort == 'asc' %}selected{% endif %}>Vzestupně</option>
+                <option value="desc" {% if current_sort == 'desc' %}selected{% endif %}>Sestupně</option>
+            </select>
+
+        </div>
+
+        <!-- PRAVÁ ČASŤ – tlačidlo úplne na kraji -->
+        <button class="btn btn-success btn-sm d-flex align-items-center gap-1"
+                data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+            <span class="material-icons">add</span> Přidat zákazníka
+        </button>
+
+    </div>
+</div>
+
+
+<div class="bg-white border rounded-3 shadow-sm mt-3 p-3"
+     style="max-height: calc(100vh - 220px); overflow-y: auto;">
+
+  {% if customers_list %}
+      <!-- 🧾 TABUĽKA SA ZOBRAZÍ IBA AK EXISTUJÚ ZÁKAZNÍCI -->
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light position-sticky top-0">
+          <tr>
+            <th style="width: 80px;">Číslo</th>
+            <th>Jméno</th>
+            <th>Email</th>
+            <th>Společnost</th>
+            <th class="text-end" style="width: 90px;"></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for customer in customers_list %}
+          <tr>
+            <td>{{ customer.id }}</td>
+            <td>{{ customer.user.username }}</td>
+            <td>{{ customer.user.email|default:"–" }}</td>
+            <td>
+              {% if customer.company_name %}
+                  {{ customer.company_name }}
+              {% else %}
+                  <span class="text-muted">–</span>
+              {% endif %}
+            </td>
+
+            <td class="text-end">
+              <div class="d-inline-flex gap-2">
+                <a href="{% url 'customer_detail' customer.id %}"
+                   class="btn btn-sm btn-outline-secondary">
+                    <span class="material-icons">visibility</span>
+                </a>
+
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="openDeleteModal('{{ customer.id }}', '{{ customer.user.username }}')">
+                    <span class="material-icons">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+  {% else %}
+      <!-- 🧩 ŽIADNI ZÁKAZNÍCI = ŽIADNA TABUĽKA, LEN HLÁŠKA -->
+      <div class="text-center text-muted py-4 fs-5">
+        Žádní zákazníci nebyli nalezeni.
+      </div>
+  {% endif %}
+</div>
+
+
+<!-- 📄 Pagination + Page size selector -->
+<div class="d-flex justify-content-between align-items-center mt-3">
+
+  <!-- 🔹 ITEMS PER PAGE -->
+  <div class="btn-group" role="group">
+    {% for size in page_sizes %}
+      <a href="?size={{ size }}"
+         class="btn btn-sm {% if page_size == size %}btn-primary{% else %}btn-secondary{% endif %}">
+        {{ size }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- 🔹 PAGINATION -->
+  <nav>
+    <ul class="pagination mb-0">
+
+      <!-- First page -->
+      {% if customers_list.number > 1 %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1&size={{ page_size }}">«</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">«</span></li>
+      {% endif %}
+
+      <!-- Previous page -->
+      {% if customers_list.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ customers_list.previous_page_number }}&size={{ page_size }}">‹</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">‹</span></li>
+      {% endif %}
+
+      <!-- Ellipsis (left) -->
+      {% if customers_list.number > 4 %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+
+      <!-- Page numbers -->
+      {% for num in customers_list.paginator.page_range %}
+        {% if num >= customers_list.number|add:'-2' and num <= customers_list.number|add:'2' %}
+          {% if num == customers_list.number %}
+            <li class="page-item active">
+              <span class="page-link">{{ num }}</span>
+            </li>
+          {% else %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ num }}&size={{ page_size }}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+
+      <!-- Ellipsis (right) -->
+      {% if customers_list.number < customers_list.paginator.num_pages|add:'-3' %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+
+      <!-- Next -->
+      {% if customers_list.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ customers_list.next_page_number }}&size={{ page_size }}">›</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">›</span></li>
+      {% endif %}
+
+      <!-- Last page -->
+      {% if customers_list.number < customers_list.paginator.num_pages %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ customers_list.paginator.num_pages }}&size={{ page_size }}">»</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">»</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+
+
+
+<script>
+function openEditModal(
+    customerId,
+    username,
+    email,
+    phone,
+    street,
+    city,
+    postalCode,
+    country,
+    companyName,
+    vatId,
+    note
+) {
+    // User fields
+    document.getElementById("editCustomerId").value = customerId;
+    document.getElementById("editUsername").value = username;
+    document.getElementById("editEmail").value = email;
+    document.getElementById("editPhone").value = phone;
+    document.getElementById("editStreet").value = street;
+    document.getElementById("editCity").value = city;
+    document.getElementById("editPostal").value = postalCode;
+    document.getElementById("editCountry").value = country;
+
+    // Customer fields
+    document.getElementById("editCompanyName").value = companyName;
+    document.getElementById("editVatId").value = vatId;
+    document.getElementById("editNote").value = note;
+
+    // Open modal
+    let modal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
+    modal.show();
+}
+
+</script>
+
+<script>
+function openDeleteModal(customerId, username) {
+    document.getElementById("deleteCustomerId").value = customerId;
+    document.getElementById("deleteCustomerName").textContent = username;
+    let modal = new bootstrap.Modal(document.getElementById('deleteCustomerModal'));
+    modal.show();
+}
+</script>
+
+<script>
+function applyFilters(page) {
+    const search = document.getElementById("searchInput").value;
+    const filter = document.getElementById("filterSelect").value;
+    const sort = document.getElementById("sortSelect").value;
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (search) {
+        params.set("search", search);
+    } else {
+        params.delete("search");
+    }
+
+    params.set("filter", filter);
+    params.set("sort", sort);
+    params.set("size", "{{ page_size }}");
+
+    if (page) {
+        params.set("page", page);
+    } else {
+        params.delete("page");
+    }
+
+    window.location = "?" + params.toString();
+}
+</script>
+
+
+
+
+
+{% include "core/customers/_customer_add_modal.html" %}
+{% include "core/customers/_customer_edit_modal.html" %}
+{% include "core/customers/_customer_delete_modal.html" %}
+
+{% endblock %}

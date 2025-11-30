@@ -1,0 +1,231 @@
+{% extends "core/base.html" %}
+{% block title %}Detail zákazníka{% endblock %}
+
+{% block content %}
+
+<style>
+  .section-card {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    border: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .section-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    row-gap: 8px;
+    column-gap: 20px;
+  }
+
+  .detail-grid .label {
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+    color: #555;
+  }
+</style>
+
+<div class="container-fluid mt-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Detail zákazníka</h2>
+
+        <div class="d-flex align-items-center gap-2">
+                   <!-- 🔧 EDIT IKONKA -->
+            <button class="btn btn-outline-primary btn-sm d-flex align-items-center"
+                    style="width: 38px; height: 38px; justify-content:center;"
+                    onclick="openEditCustomer(
+                        '{{ customer.id }}',
+                        '{{ customer.user.username|escapejs }}',
+                        '{{ customer.user.email|escapejs }}',
+                        '{{ customer.user.phone_number|escapejs }}',
+                        '{{ customer.user.street|escapejs }}',
+                        '{{ customer.user.city|escapejs }}',
+                        '{{ customer.user.postal_code|escapejs }}',
+                        '{{ customer.user.country|escapejs }}',
+                        '{{ customer.company_name|escapejs }}',
+                        '{{ customer.vat_id|escapejs }}',
+                        '{{ customer.note|escapejs }}'
+                    )">
+                <span class="material-icons">edit</span>
+            </button>
+
+            <a href="{% url 'customers' %}" class="btn btn-outline-secondary">
+              ← Zpět na seznam
+            </a>
+        </div>
+    </div>
+
+
+  <!-- 🧩 OSOBNÍ ÚDAJE -->
+  <div class="section-card">
+    <div class="section-title">Osobní údaje</div>
+
+    <div class="detail-grid">
+      <div class="label">Uživatelské jméno:</div>
+      <div>{{ customer.user.username }}</div>
+
+      <div class="label">Email:</div>
+      <div>{{ customer.user.email|default:"" }}</div>
+
+      <div class="label">Telefon:</div>
+      <div>{{ customer.user.phone_number|default:"" }}</div>
+
+      <div class="label">Adresa:</div>
+      <div>{{ customer.user.full_address|default:"" }}</div>
+    </div>
+  </div>
+
+  <!-- 🧩 FIREMNÍ ÚDAJE -->
+  <div class="section-card">
+    <div class="section-title">Firemní údaje</div>
+
+    <div class="detail-grid">
+      <div class="label">Název společnosti:</div>
+      <div>{{ customer.company_name|default:"" }}</div>
+
+      <div class="label">IČ DPH:</div>
+      <div>{{ customer.vat_id|default:"" }}</div>
+    </div>
+  </div>
+
+  <!-- 🧩 POZNÁMKA -->
+  <div class="section-card">
+    <div class="section-title">Poznámka</div>
+    <div>{{ customer.note|default:"" }}</div>
+  </div>
+
+<!-- 🧩 LETADLA -->
+<div class="section-card">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="section-title mb-0">Letadla</div>
+
+    <button class="btn btn-success btn-sm d-flex align-items-center gap-1"
+            data-bs-toggle="modal"
+            data-bs-target="#addAircraftModal">
+      <span class="material-icons">add</span>
+      Přidat letadlo
+    </button>
+  </div>
+
+  {% if customer.aircraft.all.count > 0 %}
+      <!-- Tabulka pouze pokud existují data -->
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 80px;">Číslo</th>
+            <th>Registrace</th>
+            <th>Typ</th>
+            <th class="text-end" style="width: 90px;"></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for aircraft in customer.aircraft.all %}
+          <tr>
+            <td>{{ aircraft.id }}</td>
+            <td>{{ aircraft.registration }}</td>
+            <td>{{ aircraft.name }}</td>
+
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary"
+                      onclick="openEditAircraft('{{ aircraft.id }}',
+                                                 '{{ aircraft.registration|escapejs }}',
+                                                 '{{ aircraft.name|escapejs }}')">
+                <span class="material-icons">edit</span>
+              </button>
+
+              <button class="btn btn-sm btn-outline-danger"
+                      onclick="openDeleteAircraft('{{ aircraft.id }}',
+                                                   '{{ aircraft.registration }}')">
+                <span class="material-icons">delete</span>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+  {% else %}
+      <div class="text-center text-muted py-3">
+        Zákazník nemá žádná letadla.
+      </div>
+  {% endif %}
+
+</div>
+
+
+
+</div>
+
+{% include "core/customers/_aircraft_add_modal.html" %}
+{% include "core/customers/_aircraft_edit_modal.html" %}
+{% include "core/customers/_aircraft_delete_modal.html" %}
+{% include "core/customers/_customer_edit_modal.html" %}
+
+
+
+<script>
+function openEditAircraft(id, registration, name) {
+    document.getElementById("editAircraftId").value = id;
+    document.getElementById("editAircraftRegistration").value = registration;
+    document.getElementById("editAircraftName").value = name;
+    let modal = new bootstrap.Modal(document.getElementById("editAircraftModal"));
+    modal.show();
+}
+
+function openDeleteAircraft(id, registration) {
+    document.getElementById("deleteAircraftId").value = id;
+    document.getElementById("deleteAircraftName").textContent = registration;
+    let modal = new bootstrap.Modal(document.getElementById("deleteAircraftModal"));
+    modal.show();
+}
+</script>
+
+<script>
+function openEditCustomer(
+    customerId,
+    username,
+    email,
+    phone,
+    street,
+    city,
+    postalCode,
+    country,
+    companyName,
+    vatId,
+    note
+) {
+    document.getElementById("editCustomerId").value = customerId;
+    document.getElementById("editUsername").value = username;
+    document.getElementById("editEmail").value = email;
+    document.getElementById("editPhone").value = phone;
+    document.getElementById("editStreet").value = street;
+    document.getElementById("editCity").value = city;
+    document.getElementById("editPostal").value = postalCode;
+    document.getElementById("editCountry").value = country;
+
+    document.getElementById("editCompanyName").value = companyName;
+    document.getElementById("editVatId").value = vatId;
+    document.getElementById("editNote").value = note;
+
+    let modal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
+    modal.show();
+}
+</script>
+
+
+{% endblock %}
+
+

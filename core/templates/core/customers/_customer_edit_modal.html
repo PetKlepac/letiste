@@ -1,0 +1,86 @@
+<!-- Modal: Edit Customer -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Upravit zákazníka</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="{% url 'update_customer' %}">
+        {% csrf_token %}
+        <input type="hidden" name="customer_id" id="editCustomerId">
+        <input type="hidden" name="return_to_detail" value="1">
+
+
+        <div class="modal-body">
+
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label">Jméno</label>
+              <input type="text" class="form-control" name="username" id="editUsername">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" name="email" id="editEmail">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Telefon</label>
+              <input type="text" class="form-control" name="phone" id="editPhone">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Ulice</label>
+              <input type="text" class="form-control" name="street" id="editStreet">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Město</label>
+              <input type="text" class="form-control" name="city" id="editCity">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">PSČ</label>
+              <input type="text" class="form-control" name="postal_code" id="editPostal">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Země</label>
+              <input type="text" class="form-control" name="country" id="editCountry">
+            </div>
+
+            <hr class="my-3">
+
+            <div class="col-md-6">
+              <label class="form-label">Název firmy</label>
+              <input type="text" class="form-control" name="company_name" id="editCompanyName">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">VAT ID</label>
+              <input type="text" class="form-control" name="vat_id" id="editVatId">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Poznámka</label>
+              <textarea class="form-control" name="note" id="editNote" rows="3"></textarea>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="modal-footer d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+          <button type="submit" class="btn btn-primary">Uložit změny</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>

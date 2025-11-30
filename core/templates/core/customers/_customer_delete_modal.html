@@ -1,0 +1,28 @@
+<!-- Modal: Delete Customer -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Odstrániť zákazníka</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p>Ste si istý, že chcete vymazať zákazníka <strong id="deleteCustomerName"></strong>?</p>
+        <p class="text-danger fw-semibold">Táto akcia je nevratná.</p>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušiť</button>
+
+        <form method="POST" action="{% url 'delete_customer' %}">
+          {% csrf_token %}
+          <input type="hidden" name="customer_id" id="deleteCustomerId">
+          <button type="submit" class="btn btn-danger">Vymazať</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
