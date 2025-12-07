@@ -20,10 +20,9 @@
     color: #000;
   }
 
-  /* divider až do okraja modalu */
   .section-divider {
       border-top: 1px solid rgba(0,0,0,.175);
-      margin: 1rem -1rem;    /* MAGIC: vykompenzuje padding modalu */
+      margin: 1rem -1rem;
   }
 </style>
 
@@ -32,11 +31,9 @@
 
     <div class="d-flex justify-content-between align-items-center w-100">
 
-        <!-- ĽAVÁ ČASŤ – search pole široké + filtre kompaktné -->
-        <div class="d-flex align-items-center gap-3 flex-grow-1">  <!-- flex-grow-1 je kľúčové! -->
+        <div class="d-flex align-items-center gap-3 flex-grow-1">
 
-            <!-- SEARCH – teraz má priestor, koľko chce -->
-            <div class="input-group flex-grow-1" style="max-width: 500px;">  <!-- alebo aj 600px / 700px podľa chuti -->
+            <div class="input-group flex-grow-1" style="max-width: 500px;">
                 <span class="input-group-text"><span class="material-icons">search</span></span>
                 <input id="searchInput" type="text" class="form-control"
                        placeholder="Hľadať..."
@@ -44,7 +41,6 @@
                        onkeydown="if(event.key==='Enter') applyFilters();">
             </div>
 
-            <!-- FILTER + SORT – zostanú úzke a hneď vedľa searchu -->
             <select id="filterSelect" class="form-select form-select-sm" style="width: 160px;" onchange="applyFilters()">
                 <option value="id" {% if current_filter == 'id' %}selected{% endif %}>Podle čísla</option>
                 <option value="name" {% if current_filter == 'name' %}selected{% endif %}>Podle jména</option>
@@ -59,7 +55,6 @@
 
         </div>
 
-        <!-- PRAVÁ ČASŤ – tlačidlo úplne na kraji -->
         <button class="btn btn-success btn-sm d-flex align-items-center gap-1"
                 data-bs-toggle="modal" data-bs-target="#addCustomerModal">
             <span class="material-icons">add</span> Přidat zákazníka
@@ -69,17 +64,17 @@
 </div>
 
 
-<div class="bg-white border rounded-3 shadow-sm mt-3 p-3"
-     style="max-height: calc(100vh - 220px); overflow-y: auto;">
+<!-- FIX APPLIED HERE -->
+<div class="bg-white border rounded-3 shadow-sm mt-3 p-3">
+    <div style="max-height: calc(100vh - 260px); overflow-y: auto;">
+
 
   {% if customers_list %}
-      <!-- 🧾 TABUĽKA SA ZOBRAZÍ IBA AK EXISTUJÚ ZÁKAZNÍCI -->
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light position-sticky top-0">
           <tr>
-            <th style="width: 80px;">Číslo</th>
-            <th>Jméno</th>
-            <th>Email</th>
+            <th style="width: 210px;">Jméno</th>
+            <th style="width: 360px;">Email</th>
             <th>Společnost</th>
             <th class="text-end" style="width: 90px;"></th>
           </tr>
@@ -88,7 +83,6 @@
         <tbody>
           {% for customer in customers_list %}
           <tr>
-            <td>{{ customer.id }}</td>
             <td>{{ customer.user.username }}</td>
             <td>{{ customer.user.email|default:"–" }}</td>
             <td>
@@ -118,55 +112,53 @@
       </table>
 
   {% else %}
-      <!-- 🧩 ŽIADNI ZÁKAZNÍCI = ŽIADNA TABUĽKA, LEN HLÁŠKA -->
       <div class="text-center text-muted py-4 fs-5">
         Žádní zákazníci nebyli nalezeni.
       </div>
   {% endif %}
+
+    </div>
 </div>
+<!-- END OF FIX -->
 
-
-<!-- 📄 Pagination + Page size selector -->
 <div class="d-flex justify-content-between align-items-center mt-3">
 
-  <!-- 🔹 ITEMS PER PAGE -->
+  <!-- PAGE SIZE -->
   <div class="btn-group" role="group">
     {% for size in page_sizes %}
-      <a href="?size={{ size }}"
+      <a href="?page={{ customers_list.number }}&size={{ size }}&search={{ search_query }}&filter={{ current_filter }}&sort={{ current_sort }}"
          class="btn btn-sm {% if page_size == size %}btn-primary{% else %}btn-secondary{% endif %}">
         {{ size }}
       </a>
     {% endfor %}
   </div>
 
-  <!-- 🔹 PAGINATION -->
+  <!-- PAGE LINKS -->
   <nav>
     <ul class="pagination mb-0">
 
-      <!-- First page -->
       {% if customers_list.number > 1 %}
         <li class="page-item">
-          <a class="page-link" href="?page=1&size={{ page_size }}">«</a>
+          <a class="page-link"
+             href="?page=1&size={{ page_size }}&search={{ search_query }}&filter={{ current_filter }}&sort={{ current_sort }}">«</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">«</span></li>
       {% endif %}
 
-      <!-- Previous page -->
       {% if customers_list.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ customers_list.previous_page_number }}&size={{ page_size }}">‹</a>
+          <a class="page-link"
+             href="?page={{ customers_list.previous_page_number }}&size={{ page_size }}&search={{ search_query }}&filter={{ current_filter }}&sort={{ current_sort }}">‹</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">‹</span></li>
       {% endif %}
 
-      <!-- Ellipsis (left) -->
       {% if customers_list.number > 4 %}
         <li class="page-item disabled"><span class="page-link">…</span></li>
       {% endif %}
 
-      <!-- Page numbers -->
       {% for num in customers_list.paginator.page_range %}
         {% if num >= customers_list.number|add:'-2' and num <= customers_list.number|add:'2' %}
           {% if num == customers_list.number %}
@@ -175,38 +167,33 @@
             </li>
           {% else %}
             <li class="page-item">
-              <a class="page-link" href="?page={{ num }}&size={{ page_size }}">{{ num }}</a>
+              <a class="page-link"
+                 href="?page={{ num }}&size={{ page_size }}&search={{ search_query }}&filter={{ current_filter }}&sort={{ current_sort }}">
+                {{ num }}
+              </a>
             </li>
           {% endif %}
         {% endif %}
       {% endfor %}
 
-      <!-- Ellipsis (right) -->
-      {% if customers_list.number < customers_list.paginator.num_pages|add:'-3' %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-
-      <!-- Next -->
       {% if customers_list.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ customers_list.next_page_number }}&size={{ page_size }}">›</a>
+          <a class="page-link"
+             href="?page={{ customers_list.next_page_number }}&size={{ page_size }}&search={{ search_query }}&filter={{ current_filter }}&sort={{ current_sort }}">›</a>
+        </li>
+
+        <li class="page-item">
+          <a class="page-link"
+             href="?page={{ customers_list.paginator.num_pages }}&size={{ page_size }}&search={{ search_query }}&filter={{ current_filter }}&sort={{ current_sort }}">»</a>
         </li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">›</span></li>
-      {% endif %}
-
-      <!-- Last page -->
-      {% if customers_list.number < customers_list.paginator.num_pages %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ customers_list.paginator.num_pages }}&size={{ page_size }}">»</a>
-        </li>
-      {% else %}
         <li class="page-item disabled"><span class="page-link">»</span></li>
       {% endif %}
+
     </ul>
   </nav>
 </div>
-
 
 
 <script>
@@ -223,7 +210,6 @@ function openEditModal(
     vatId,
     note
 ) {
-    // User fields
     document.getElementById("editCustomerId").value = customerId;
     document.getElementById("editUsername").value = username;
     document.getElementById("editEmail").value = email;
@@ -233,12 +219,10 @@ function openEditModal(
     document.getElementById("editPostal").value = postalCode;
     document.getElementById("editCountry").value = country;
 
-    // Customer fields
     document.getElementById("editCompanyName").value = companyName;
     document.getElementById("editVatId").value = vatId;
     document.getElementById("editNote").value = note;
 
-    // Open modal
     let modal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
     modal.show();
 }
@@ -272,18 +256,13 @@ function applyFilters(page) {
     params.set("sort", sort);
     params.set("size", "{{ page_size }}");
 
-    if (page) {
-        params.set("page", page);
-    } else {
-        params.delete("page");
-    }
+    // FIX → nikdy nevymazať stránku úplne
+    params.set("page", page ? page : 1);
 
     window.location = "?" + params.toString();
 }
+
 </script>
-
-
-
 
 
 {% include "core/customers/_customer_add_modal.html" %}

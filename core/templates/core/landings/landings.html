@@ -1,6 +1,204 @@
 {% extends "core/base.html" %}
 {% block title %}Přistání{% endblock %}
+
 {% block content %}
-  <h1>Přistání</h1>
-  <p>Seznam rozpoznaných přistání letadel.</p>
+
+<style>
+  .page-header { margin-bottom: 20px; }
+</style>
+
+<!-- FILTER BAR -->
+<div class="bg-white border rounded-3 shadow-sm mb-3 px-3"
+     style="height: 60px; display:flex; align-items:center;">
+
+    <div class="d-flex align-items-center gap-3 w-100">
+
+        <!-- DATE INPUT -->
+        <input id="dateInput"
+               type="text"
+               class="form-control"
+               placeholder="Zvolte období (YYYY-MM-DD)"
+               style="width: 240px;"
+               value="{{ date_query }}"
+               onkeydown="if(event.key==='Enter'){applyFilters();}">
+
+        <!-- SORT -->
+        <select id="sortSelect"
+                class="form-select form-select-sm"
+                style="width: 130px;"
+                onchange="applyFilters()">
+
+            <option value="asc"
+                {% if current_sort == 'asc' %}selected{% endif %}>
+                Vzestupně
+            </option>
+
+            <option value="desc"
+                {% if current_sort == 'desc' %}selected{% endif %}>
+                Sestupně
+            </option>
+        </select>
+
+        <!-- RIGHT SIDE BUTTON -->
+        <div class="ms-auto">
+            <a href="{% url 'add_landing' %}"
+               class="btn btn-success btn-sm">
+                + Přidat přistání
+            </a>
+        </div>
+    </div>
+</div>
+
+
+<!-- TABLE WRAPPER -->
+<div class="bg-white border rounded-3 shadow-sm mt-3 p-3">
+    <div style="max-height: calc(100vh - 260px); overflow-y: auto;">
+
+{% if landings_list %}
+<table class="table table-hover align-middle mb-0">
+<thead class="table-light position-sticky top-0" style="z-index: 10; background:white;">
+<tr>
+    <th style="width: 150px;">Datum</th>
+    <th style="width: 120px;">Čas</th>
+    <th style="width: 120px;">Cena</th>
+    <th style="width: 160px;">Typ přistání</th>
+    <th style="width: 200px;">Zákazník</th>
+    <th class="text-end" style="width: 110px;">Akce</th>
+</tr>
+</thead>
+
+<tbody>
+{% for l in landings_list %}
+<tr>
+    <td>{{ l.date_time|date:"Y-m-d" }}</td>
+    <td>{{ l.date_time|time:"H:i:s" }}</td>
+
+    <td>{{ l.price|default:"–" }}</td>
+    <td>{{ l.landing_type|default:"–" }}</td>
+    <td>{{ l.customer|default:"–" }}</td>
+
+    <td class="text-end">
+        <div class="d-inline-flex gap-2">
+
+            <!-- PREVIEW -->
+            <a href="{% url 'landing_detail' l.id %}"
+               class="btn btn-sm btn-outline-secondary">
+                <span class="material-icons">visibility</span>
+            </a>
+
+            <!-- DELETE -->
+            <button class="btn btn-sm btn-outline-danger"
+                    onclick="deleteLanding('{{ l.id }}')">
+                <span class="material-icons">delete</span>
+            </button>
+        </div>
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% else %}
+<div class="text-center text-muted py-4 fs-5">
+    Žádná přistání nebyla nalezena.
+</div>
+{% endif %}
+
+    </div>
+</div>
+
+
+<!-- PAGINATION -->
+<div class="d-flex justify-content-between align-items-center mt-3">
+
+  <!-- PAGE SIZE -->
+  <div class="btn-group" role="group">
+    {% for size in page_sizes %}
+      <a href="?page={{ landings_list.number }}&size={{ size }}&sort={{ current_sort }}&date={{ date_query }}"
+         class="btn btn-sm {% if page_size == size %}btn-primary{% else %}btn-secondary{% endif %}">
+        {{ size }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- PAGE LINKS -->
+  <nav>
+    <ul class="pagination mb-0">
+
+      {% if landings_list.has_previous %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?page=1&size={{ page_size }}&sort={{ current_sort }}&date={{ date_query }}">«</a>
+        </li>
+
+        <li class="page-item">
+          <a class="page-link"
+             href="?page={{ landings_list.previous_page_number }}&size={{ page_size }}&sort={{ current_sort }}&date={{ date_query }}">‹</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">«</span></li>
+        <li class="page-item disabled"><span class="page-link">‹</span></li>
+      {% endif %}
+
+
+      {% for num in landings_list.paginator.page_range %}
+        {% if num >= landings_list.number|add:'-2' and num <= landings_list.number|add:'2' %}
+
+          {% if num == landings_list.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item">
+              <a class="page-link"
+                 href="?page={{ num }}&size={{ page_size }}&sort={{ current_sort }}&date={{ date_query }}">
+                {{ num }}
+              </a>
+            </li>
+          {% endif %}
+
+        {% endif %}
+      {% endfor %}
+
+
+      {% if landings_list.has_next %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?page={{ landings_list.next_page_number }}&size={{ page_size }}&sort={{ current_sort }}&date={{ date_query }}">›</a>
+        </li>
+
+        <li class="page-item">
+          <a class="page-link"
+             href="?page={{ landings_list.paginator.num_pages }}&size={{ page_size }}&sort={{ current_sort }}&date={{ date_query }}">»</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">›</span></li>
+        <li class="page-item disabled"><span class="page-link">»</span></li>
+      {% endif %}
+
+    </ul>
+  </nav>
+</div>
+
+
+<!-- FILTER SCRIPT -->
+<script>
+function applyFilters() {
+    const sort = document.getElementById("sortSelect").value;
+    const date = document.getElementById("dateInput").value;
+
+    const params = new URLSearchParams(window.location.search);
+
+    params.set("sort", sort);
+
+    if (date.trim() !== "") {
+        params.set("date", date.trim());
+    } else {
+        params.delete("date");
+    }
+
+    params.set("page", 1);
+
+    window.location = "?" + params.toString();
+}
+</script>
+
 {% endblock %}

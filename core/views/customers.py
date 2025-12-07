@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 def customers(request):
     # URL parameters
     search_query = request.GET.get("search", "")
-    filter_field = request.GET.get("filter", "id")
+    filter_field = request.GET.get("filter", "name")
     sort_dir = request.GET.get("sort", "asc")
     # Safe page handling
     try:
@@ -17,7 +17,7 @@ def customers(request):
             page = 1
     except:
         page = 1
-    page_size = int(request.GET.get("size", 10))
+    page_size = int(request.GET.get("size", 25))
 
     # Base queryset
     customers = Customer.objects.select_related("user")
@@ -55,7 +55,7 @@ def customers(request):
     return render(request, "core/customers/customers.html", {
         "customers_list": customers_page,
         "page_size": page_size,
-        "page_sizes": [1, 3, 5, 10],
+        "page_sizes": [10, 25, 50, 100],
         "search_query": search_query,
         "current_filter": filter_field,
         "current_sort": sort_dir,
